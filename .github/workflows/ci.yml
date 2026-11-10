@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Cancel an in-progress run when a newer commit lands on the same branch/PR.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Lint and type checks run through pre-commit, so CI uses exactly the same
+  # hook versions and arguments as .pre-commit-config.yaml. These jobs only
+  # need pre-commit itself, not the heavy project dependencies.
+  lint:
+    name: Lint (ruff + hygiene hooks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - name: Install pre-commit
+        run: pip install pre-commit==4.7.0
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+      - name: Hygiene hooks
+        run: |
+          pre-commit run trailing-whitespace --all-files --show-diff-on-failure
+          pre-commit run end-of-file-fixer --all-files --show-diff-on-failure
+          pre-commit run check-yaml --all-files
+          pre-commit run check-added-large-files --all-files
+      - name: Ruff lint
+        run: pre-commit run ruff-check --all-files --show-diff-on-failure
+      - name: Ruff format check
+        run: pre-commit run ruff-format --all-files --show-diff-on-failure
+
+  typecheck:
+    name: Type check (mypy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - name: Install pre-commit
+        run: pip install pre-commit==4.7.0
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+      - name: Mypy
+        run: pre-commit run mypy --all-files
+
+  # Tests run inside the project Docker image, which already has ROS 2
+  # (rclpy, cv_bridge), torch, open3d, LightGlue, etc. installed for Python 3.14.
+  test:
+    name: Tests (pytest in Docker)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: calibforge:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Run pytest
+        # The repo is mounted at /workspace, matching how the image is used
+        # locally. The ROS entrypoint sources the ROS 2 environment first.
+        # Exit code 5 means "no tests collected"; it is treated as success
+        # until tests/ has real tests. Remove that guard once it does.
+        run: |
+          set +e
+          docker run --rm -v "$PWD:/workspace" calibforge:ci \
+            python3 -m pytest -ra
+          code=$?
+          if [ "$code" -eq 5 ]; then
+            echo "::warning::pytest collected no tests"
+            exit 0
+          fi
+          exit "$code"

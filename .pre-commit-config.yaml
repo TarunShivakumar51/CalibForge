@@ -1,0 +1,35 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.2.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-yaml
+    -   id: check-added-large-files
+
+# Ruff: linting (with safe autofixes) and formatting.
+# rev matches ruff==0.17.3 in requirements.txt.
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.3
+    hooks:
+    # The linter must run before the formatter, because its fixes can leave
+    # code that needs reformatting.
+    -   id: ruff-check
+        args: [--fix]
+    -   id: ruff-format
+
+# Mypy: static type checking.
+# rev matches mypy==2.4.1 in requirements.txt.
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v2.4.1
+    hooks:
+    -   id: mypy
+        # The hook runs in its own isolated environment, so it cannot see the
+        # packages from requirements.txt. numpy ships its own type stubs and is
+        # used everywhere, so it is installed here; other untyped or heavy
+        # libraries (cv2, torch, open3d, rclpy, ...) are skipped.
+        additional_dependencies:
+        -   numpy==2.5.4
+        args: [--ignore-missing-imports]

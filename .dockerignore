@@ -1,0 +1,68 @@
+# Keep the build context small: the image only needs requirements.txt today,
+# and the project source is mounted at /workspace at runtime.
+# If the Dockerfile starts COPYing source, make sure it isn't excluded here.
+
+# Version control and CI
+.git/
+.gitignore
+.dvc/cache/
+.dvc/tmp/
+.pre-commit-config.yaml
+
+# Docker files themselves
+Dockerfile
+.dockerignore
+
+# Documents
+*.pdf
+*:Zone.Identifier
+docs/
+
+# Python caches and environments
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.hypothesis/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# ROS 2 build output (rebuilt inside the container)
+ros2_ws/build/
+ros2_ws/install/
+ros2_ws/log/
+log/
+
+# Large data, bags, models and experiment output
+data/
+*.mcap
+*.db3
+rosbag2_*/
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.safetensors
+mlruns/
+mlartifacts/
+outputs/
+multirun/
+
+# Unity project (not used by the image, and very large once opened)
+unity/
+
+# Secrets, editors and OS files
+.env
+.env.*
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db

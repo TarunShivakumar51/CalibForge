@@ -1,0 +1,118 @@
+# ---------------------------------------------------------------------------
+# Documents
+# ---------------------------------------------------------------------------
+*.pdf
+# Windows "downloaded from the internet" metadata that WSL copies alongside files
+*:Zone.Identifier
+
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+*.egg
+build/
+dist/
+.eggs/
+pip-wheel-metadata/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Tool caches (pytest, hypothesis, ruff, mypy, coverage)
+.pytest_cache/
+.hypothesis/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Jupyter
+.ipynb_checkpoints/
+
+# py-spy profiles
+*.svg.profile
+profile*.svg
+*.speedscope.json
+
+# ---------------------------------------------------------------------------
+# ROS 2 (colcon workspace)
+# ---------------------------------------------------------------------------
+ros2_ws/build/
+ros2_ws/install/
+ros2_ws/log/
+log/
+
+# ---------------------------------------------------------------------------
+# Data, models and experiments
+# Large files belong in DVC: commit the *.dvc / dvc.lock files, not the data.
+# DVC also writes its own .gitignore entries next to tracked paths.
+# ---------------------------------------------------------------------------
+# DVC local cache/config (DVC normally ignores these itself, kept as a backstop)
+.dvc/cache/
+.dvc/tmp/
+.dvc/config.local
+
+# ROS bags
+*.mcap
+*.db3
+rosbag2_*/
+
+# Model weights and exports
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.safetensors
+
+# MLflow
+mlruns/
+mlartifacts/
+
+# Hydra run outputs
+outputs/
+multirun/
+
+# ---------------------------------------------------------------------------
+# Unity
+# ---------------------------------------------------------------------------
+unity/**/[Ll]ibrary/
+unity/**/[Tt]emp/
+unity/**/[Oo]bj/
+unity/**/[Bb]uild/
+unity/**/[Bb]uilds/
+unity/**/[Ll]ogs/
+unity/**/[Uu]ser[Ss]ettings/
+unity/**/[Mm]emoryCaptures/
+*.csproj
+*.sln
+*.unityproj
+*.pidb
+*.booproj
+*.userprefs
+*.apk
+*.aab
+crashlytics-build.properties
+
+# ---------------------------------------------------------------------------
+# Environment, secrets, editors and OS
+# ---------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+.DS_Store
+Thumbs.db
+desktop.ini

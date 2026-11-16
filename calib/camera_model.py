@@ -25,3 +25,17 @@ def distort(xy, dist):
     y_d = y * radial + p1 * (r2 + 2 * y**2) + 2 * p2 * x * y
 
     return np.stack([x_d, y_d], axis=-1)
+
+
+# Convert normalized coord points to pixels relative to the corner of the board
+def to_pixels(xy, K):
+    fx = K[0, 0]
+    cx = K[0, 2]
+
+    fy = K[1, 1]
+    cy = K[1, 2]
+
+    u = fx * xy[..., 0] + cx
+    v = fy * xy[..., 1] + cy
+
+    np.stack([u, v], axis=-1)

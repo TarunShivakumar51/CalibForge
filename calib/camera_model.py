@@ -1,18 +1,22 @@
 import numpy as np
 
 
-# Takes a point relative to the ChArUco board/world and transforms it into camera points.
+# Moves 3D points from world coordinates to camera coordinates
+# by rotating them with R and then shifting them by t.
 def transform_points(R, t, X_world):
     t = t.reshape(3)
     return X_world @ R.T + t
 
 
-# Projects a 3D point into normalized 2D image points.
+# Flattens 3D camera points to 2D by dividing x and y by the depth z.
+# The result is in normalized coordinates, not pixels.
 def project_pinhole(X_cam):
     return X_cam[..., :2] / X_cam[..., 2:3]
 
 
-# Distorts points to simulate where they would appear on an actual camera.
+# Applies lens distortion to ideal normalized points.
+# k1, k2, k3 are radial distortion (lines bow in or out).
+# p1, p2 are tangential distortion (lens not parallel to the sensor).
 def distort(xy, dist):
     k1, k2, p1, p2, k3 = dist
     x = xy[..., 0]
@@ -27,7 +31,8 @@ def distort(xy, dist):
     return np.stack([x_d, y_d], axis=-1)
 
 
-# Convert normalized points to pixels relative to image's top-left corner
+# Converts normalized points to pixel coordinates using the camera matrix K.
+# fx, fy are the focal lengths and cx, cy is the image center (principal point).
 def to_pixels(xy, K):
     fx = K[0, 0]
     cx = K[0, 2]
@@ -41,6 +46,8 @@ def to_pixels(xy, K):
     return np.stack([u, v], axis=-1)
 
 
+# Runs the full pipeline from 3D world points to 2D pixels:
+# world -> camera -> normalized -> distorted -> pixels.
 def project(R, t, X_world, dist, K):
     X_cam = transform_points(R, t, X_world)
     normalized_xy = project_pinhole(X_cam)
@@ -50,6 +57,9 @@ def project(R, t, X_world, dist, K):
     return pixel
 
 
+# Removes lens distortion from normalized points (the reverse of distort).
+# There is no simple exact formula, so it starts with the distorted point
+# as a guess and refines it over a fixed number of iterations.
 def undistort(xy_d, dist, iters=20):
     k1, k2, p1, p2, k3 = dist
     x_d, y_d = xy_d[..., 0], xy_d[..., 1]
@@ -65,6 +75,8 @@ def undistort(xy_d, dist, iters=20):
     return np.stack([x, y], axis=-1)
 
 
+# Converts pixels back to undistorted normalized points.
+# Depth is unknown, so each result is a ray direction (x, y, 1), not a 3D point.
 def unproject(uv, K, dist):
 
     fx = K[0, 0]

@@ -1,11 +1,9 @@
-import math
-
 import numpy as np
 
 
 # Takes a point relative to the ChArUco board/world and transforms it into camera points.
 def transform_points(R, t, X_world):
-    t.reshape(3)
+    t = t.reshape(3)
     return X_world @ R.T + t
 
 
@@ -52,20 +50,33 @@ def project(R, t, X_world, dist, K):
     return pixel
 
 
-def undistort(xy_d, dist):
+def undistort(xy_d, dist, iters=20):
     k1, k2, p1, p2, k3 = dist
-    x = xy_d[..., 0]
-    y = xy_d[..., 1]
+    x_d, y_d = xy_d[..., 0], xy_d[..., 1]
+    x, y = x_d, y_d
 
-    r = math.sqrt((x**2) + (y**2))
+    for _ in range(iters):
+        r2 = x**2 + y**2
+        radial = 1 + k1 * r2 + k2 * r2**2 + k3 * r2**3
+        dx = 2 * p1 * x * y + p2 * (r2 + 2 * x**2)
+        dy = p1 * (r2 + 2 * y**2) + 2 * p2 * x * y
+        x, y = (x_d - dx) / radial, (y_d - dy) / radial
 
-    x_rad = x * (1 + k1 * r**2 + k2 * r**4 + k3 * r**6)
-    y_rad = y * (1 + k1 * r**2 + k2 * r**4 + k3 * r**6)
+    return np.stack([x, y], axis=-1)
 
-    x_tang = (2 * p1 * x * y) + p2 * (r**2 + 2 * x**2)
-    y_tang = p1 * (r**2 + 2 * y**2) + (2 * p2 * x * y)
 
-    x_distorted = x_rad + x_tang
-    y_distorted = y_rad + y_tang
+def unproject(uv, K, dist):
 
-    return np.stack((x_distorted, y_distorted), axis=-1)
+    fx = K[0, 0]
+    cx = K[0, 2]
+
+    fy = K[1, 1]
+    cy = K[1, 2]
+
+    u = uv[..., 0]
+    v = uv[..., 1]
+
+    x_d = (u - cx) / fx
+    y_d = (v - cy) / fy
+
+    return undistort(np.stack([x_d, y_d], axis=-1), dist)
